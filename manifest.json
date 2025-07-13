@@ -1,13 +1,13 @@
 {
   "domain": "hbx_sensorlinx",
   "name": "HBX SensorLinx",
-  "codeowners": ["@your-github-username"],
+  "codeowners": ["@jasipsw"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/your-repo/hbx-sensorlinx",
+  "documentation": "https://github.com/jasipsw/hbx-sensorlinx",
   "homekit": {},
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/your-repo/hbx-sensorlinx/issues",
+  "issue_tracker": "https://github.com/jasipsw/hbx-sensorlinx/issues",
   "requirements": [
     "aiohttp>=3.8.0"
   ],
