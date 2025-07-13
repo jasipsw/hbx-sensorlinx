@@ -1,191 +1,160 @@
 """Sensor platform for HBX SensorLinx integration."""
 import logging
-from typing import Any
+from typing import Optional, Dict, Any
+from datetime import timedelta
 
-from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorDeviceClass,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.const import UnitOfTemperature, PERCENTAGE
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.const import (
+    CONF_API_KEY,
+    CONF_URL,
+    CONF_SCAN_INTERVAL,
+    UnitOfTemperature,
+    PERCENTAGE,
+)
 
-from .const import DOMAIN
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, MANUFACTURER
+from .api import SensorLinxAPI, SensorLinxDevice
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up SensorLinx sensor platform."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+    """Set up the sensor platform."""
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
     
     entities = []
     
     # Create sensors for each device
     for device_id, device_data in coordinator.data.items():
-        device_info = device_data["info"]
-        sensors_data = device_data["sensors"]
+        device = SensorLinxDevice(device_data)
+        sensor_definitions = device.get_sensor_definitions()
         
-        # Create temperature sensor
-        if "temperature" in sensors_data or "temp" in sensors_data:
+        for sensor_key, sensor_config in sensor_definitions.items():
             entities.append(
-                SensorLinxTemperatureSensor(
+                SensorLinxSensor(
                     coordinator=coordinator,
-                    device_id=device_id,
-                    device_info=device_info,
-                )
-            )
-        
-        # Create humidity sensor
-        if "humidity" in sensors_data or "hum" in sensors_data:
-            entities.append(
-                SensorLinxHumiditySensor(
-                    coordinator=coordinator,
-                    device_id=device_id,
-                    device_info=device_info,
-                )
-            )
-        
-        # Create battery sensor if available
-        if "battery" in sensors_data or "bat" in sensors_data:
-            entities.append(
-                SensorLinxBatterySensor(
-                    coordinator=coordinator,
-                    device_id=device_id,
-                    device_info=device_info,
+                    device=device,
+                    sensor_key=sensor_key,
+                    sensor_config=sensor_config,
                 )
             )
     
     async_add_entities(entities)
 
-class SensorLinxSensorBase(CoordinatorEntity, SensorEntity):
-    """Base class for SensorLinx sensors."""
+
+class SensorLinxSensor(CoordinatorEntity, SensorEntity):
+    """Representation of a SensorLinx sensor."""
     
-    def __init__(self, coordinator, device_id: str, device_info: dict):
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        device: SensorLinxDevice,
+        sensor_key: str,
+        sensor_config: Dict[str, Any],
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
-        self._device_id = device_id
-        self._device_info = device_info
-        self._attr_has_entity_name = True
+        
+        self._device = device
+        self._sensor_key = sensor_key
+        self._sensor_config = sensor_config
+        
+        # Generate unique ID
+        self._attr_unique_id = f"{device.id}_{sensor_key}"
+        
+        # Set entity attributes
+        self._attr_name = f"{device.display_name} {sensor_config['name']}"
+        self._attr_native_unit_of_measurement = sensor_config.get("unit")
+        self._attr_device_class = sensor_config.get("device_class")
+        self._attr_state_class = sensor_config.get("state_class")
+        self._attr_icon = sensor_config.get("icon")
+        
+        # Device info for grouping sensors under devices
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device.id)},
+            name=device.display_name,
+            manufacturer=MANUFACTURER,
+            model=device.device_type,
+            sw_version=str(device.firmware_version),
+            configuration_url=f"https://connect.sensorlinx.co/devices/{device.id}",
+        )
         
     @property
-    def device_info(self):
-        """Return device info."""
-        return {
-            "identifiers": {(DOMAIN, self._device_id)},
-            "name": f"SensorLinx {self._device_id}",
-            "manufacturer": "HBX",
-            "model": self._device_info.get("deviceType", "Unknown"),
-            "sw_version": self._device_info.get("firmVer"),
-        }
-    
-    @property
-    def unique_id(self):
-        """Return unique ID."""
-        return f"{DOMAIN}_{self._device_id}_{self._sensor_type}"
-    
+    def native_value(self) -> Optional[float]:
+        """Return the state of the sensor."""
+        if self.coordinator.data and self._device.id in self.coordinator.data:
+            device_data = self.coordinator.data[self._device.id]
+            value = device_data.get(self._sensor_key)
+            
+            if value is not None:
+                try:
+                    return float(value)
+                except (ValueError, TypeError):
+                    return value
+        return None
+        
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
         return (
             self.coordinator.last_update_success
-            and self._device_id in self.coordinator.data
+            and self.coordinator.data
+            and self._device.id in self.coordinator.data
+            and self.coordinator.data[self._device.id].get("connected", False)
         )
-
-class SensorLinxTemperatureSensor(SensorLinxSensorBase):
-    """Temperature sensor for SensorLinx."""
-    
-    _sensor_type = "temperature"
-    
-    def __init__(self, coordinator, device_id: str, device_info: dict):
-        """Initialize the temperature sensor."""
-        super().__init__(coordinator, device_id, device_info)
-        self._attr_name = "Temperature"
-        self._attr_device_class = SensorDeviceClass.TEMPERATURE
-        self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
-        self._attr_state_class = "measurement"
-    
+        
     @property
-    def native_value(self) -> float | None:
-        """Return the temperature value."""
-        if self._device_id not in self.coordinator.data:
-            return None
-            
-        sensors_data = self.coordinator.data[self._device_id]["sensors"]
-        
-        # Try different possible temperature field names
-        for temp_field in ["temperature", "temp", "Temperature", "Temp"]:
-            if temp_field in sensors_data:
-                try:
-                    return float(sensors_data[temp_field])
-                except (ValueError, TypeError):
-                    _LOGGER.warning(f"Invalid temperature value: {sensors_data[temp_field]}")
-                    return None
-        
-        return None
+    def extra_state_attributes(self) -> Dict[str, Any]:
+        """Return additional state attributes."""
+        if self.coordinator.data and self._device.id in self.coordinator.data:
+            device_data = self.coordinator.data[self._device.id]
+            return {
+                "device_type": device_data.get("deviceType"),
+                "firmware_version": device_data.get("firmVer"),
+                "connected_at": device_data.get("connectedAt"),
+                "zone": device_data.get("zone"),
+                "priority": device_data.get("priority"),
+            }
+        return {}
 
-class SensorLinxHumiditySensor(SensorLinxSensorBase):
-    """Humidity sensor for SensorLinx."""
-    
-    _sensor_type = "humidity"
-    
-    def __init__(self, coordinator, device_id: str, device_info: dict):
-        """Initialize the humidity sensor."""
-        super().__init__(coordinator, device_id, device_info)
-        self._attr_name = "Humidity"
-        self._attr_device_class = SensorDeviceClass.HUMIDITY
-        self._attr_native_unit_of_measurement = PERCENTAGE
-        self._attr_state_class = "measurement"
-    
-    @property
-    def native_value(self) -> float | None:
-        """Return the humidity value."""
-        if self._device_id not in self.coordinator.data:
-            return None
-            
-        sensors_data = self.coordinator.data[self._device_id]["sensors"]
-        
-        # Try different possible humidity field names
-        for hum_field in ["humidity", "hum", "Humidity", "Hum"]:
-            if hum_field in sensors_data:
-                try:
-                    return float(sensors_data[hum_field])
-                except (ValueError, TypeError):
-                    _LOGGER.warning(f"Invalid humidity value: {sensors_data[hum_field]}")
-                    return None
-        
-        return None
 
-class SensorLinxBatterySensor(SensorLinxSensorBase):
-    """Battery sensor for SensorLinx."""
+class SensorLinxDataUpdateCoordinator(DataUpdateCoordinator):
+    """Class to manage fetching data from the API."""
     
-    _sensor_type = "battery"
-    
-    def __init__(self, coordinator, device_id: str, device_info: dict):
-        """Initialize the battery sensor."""
-        super().__init__(coordinator, device_id, device_info)
-        self._attr_name = "Battery"
-        self._attr_device_class = SensorDeviceClass.BATTERY
-        self._attr_native_unit_of_measurement = PERCENTAGE
-        self._attr_state_class = "measurement"
-    
-    @property
-    def native_value(self) -> float | None:
-        """Return the battery value."""
-        if self._device_id not in self.coordinator.data:
-            return None
-            
-        sensors_data = self.coordinator.data[self._device_id]["sensors"]
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        api: SensorLinxAPI,
+        update_interval: timedelta,
+    ) -> None:
+        """Initialize the coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=update_interval,
+        )
+        self.api = api
         
-        # Try different possible battery field names
-        for bat_field in ["battery", "bat", "Battery", "Bat", "batteryLevel"]:
-            if bat_field in sensors_data:
-                try:
-                    return float(sensors_data[bat_field])
-                except (ValueError, TypeError):
-                    _LOGGER.warning(f"Invalid battery value: {sensors_data[bat_field]}")
-                    return None
-        
-        return None
+    async def _async_update_data(self) -> Dict[str, Any]:
+        """Fetch data from API endpoint."""
+        try:
+            return await self.api.get_all_device_data()
+        except Exception as err:
+            raise UpdateFailed(f"Error communicating with API: {err}")

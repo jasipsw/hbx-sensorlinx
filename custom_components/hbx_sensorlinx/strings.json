@@ -1,34 +1,20 @@
 {
-  "config": {
-    "step": {
-      "user": {
-        "title": "HBX SensorLinx Setup",
-        "description": "Configure your HBX SensorLinx API connection",
-        "data": {
-          "api_key": "API Key",
-          "base_url": "Base URL",
-          "update_interval": "Update Interval (seconds)"
-        }
-      }
-    },
-    "error": {
-      "cannot_connect": "Failed to connect to the SensorLinx API",
-      "invalid_auth": "Invalid API key",
-      "unknown": "Unexpected error occurred"
-    },
-    "abort": {
-      "already_configured": "SensorLinx integration is already configured"
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "HBX SensorLinx Options",
-        "description": "Update your HBX SensorLinx configuration",
-        "data": {
-          "update_interval": "Update Interval (seconds)"
-        }
-      }
-    }
-  }
+  "domain": "hbx_sensorlinx",
+  "name": "HBX SensorLinx",
+  "config_flow": true,
+  "documentation": "https://github.com/jasipsw/hbx-sensorlinx",
+  "issue_tracker": "https://github.com/jasipsw/hbx-sensorlinx/issues",
+  "requirements": [
+    "aiohttp>=3.8.0"
+  ],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@jasipsw"
+  ],
+  "version": "1.0.0",
+  "iot_class": "cloud_polling",
+  "quality_scale": "silver"
 }
