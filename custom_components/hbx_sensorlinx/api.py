@@ -73,7 +73,7 @@ class SensorLinxAPI:
         """Get current sensor data for a device."""
         try:
             # Use syncCode as the device identifier
-            response = await self._request('GET', f'/v1/devices/{device_id}/data')
+            response = await self._request('GET', f'/v1/devices/{device_id}')
             return response.get('sensors', response.get('data', []))
         except Exception as err:
             _LOGGER.error("Failed to get device data for %s: %s", device_id, err)
