@@ -1,0 +1,1287 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "SensorLinx Connect API",
+    "description": "### Introduction\r\n\r\nThe SensorLinx Connect API provides users of the SensorLinx™ by HBX Controls system with programmatic access to real-time and historical data from their connected devices. Designed for seamless integration, the API enables developers to create custom applications and tools to monitor, analyze, and optimize HVAC, solar thermal, and geothermal systems.\r\n\r\n#### Download the mobile app\r\n\r\n* [Google Play Store](https://play.google.com/store/apps/details?id=com.hbxcontrols.sensorlinx)\r\n* [Apple App Store](https://apps.apple.com/ca/app/sensorlinx/id1589271036)\r\n\r\n<!-- <details>\r\n\t<summary>Rate Limiting</summary>\r\n</details> -->\r\n",
+    "version": "1.0.0",
+    "contact": {
+      "url": "https://hbxcontrols.com",
+      "email": "developer@hbxcontrols.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://connect.sensorlinx.co/{version}",
+      "description": "Responds with your request data",
+      "variables": {
+        "version": {
+          "enum": [
+            "v1"
+          ],
+          "default": "v1"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "authorizationHeader": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Device",
+      "description": "Monitor and manage device information in your system"
+    }
+  ],
+  "paths": {
+    "/devices/available": {
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "summary": "Retrieve device brief",
+        "description": "Fetches a list of all devices available in the current building, including metadata such as device name, type, and unique identifiers. This endpoint does not include real-time data or device status, making it ideal for retrieving a lightweight overview of available devices.",
+        "operationId": "getDevicesAvailable",
+        "parameters": [
+          {
+            "in": "query",
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "in": "query",
+            "$ref": "#/components/parameters/page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "description": "Device Attributes",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/DeviceBrief"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/PaginatedResource"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices": {
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "summary": "Retrieve all devices",
+        "description": "Provides the current status of all devices in the building, including metadata and real-time data such as device status, temperature, and other live metrics. This endpoint is useful for monitoring the overall system performance.",
+        "operationId": "getAllDevices",
+        "parameters": [
+          {
+            "in": "query",
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "in": "query",
+            "$ref": "#/components/parameters/page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceBase"
+                    },
+                    {
+                      "type": "object",
+                      "description": "Device Specific Attributes",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AllDevices"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/PaginatedResource"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/{syncCode}": {
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "summary": "Retrieve a device",
+        "description": "Fetches the current status of a specific device, identified by its unique syncCode. The response includes both metadata (e.g., device type and name) and real-time data, such as operational status and live measurements. Use this endpoint to focus on a single device for detailed monitoring.",
+        "operationId": "getDevice",
+        "parameters": [
+          {
+            "in": "path",
+            "$ref": "#/components/parameters/syncCode"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllDevices"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Device"
+        ],
+        "summary": "Update a device",
+        "description": "Fetches the current status of a specific device, identified by its unique syncCode. The response includes both metadata (e.g., device type and name) and real-time data, such as operational status and live measurements. Use this endpoint to focus on a single device for detailed monitoring.",
+        "operationId": "getDevice",
+        "x-scalar-stability": "experimental",
+        "parameters": [
+          {
+            "in": "path",
+            "$ref": "#/components/parameters/syncCode"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllDevices"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/model/{model}": {
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "summary": "Retrieve devices by model",
+        "description": "Retrieves the current status and metadata of all devices of a specific model or type in the building. This is helpful for analyzing or monitoring a group of devices with the same functionality or purpose.",
+        "operationId": "getDevice",
+        "parameters": [
+          {
+            "in": "path",
+            "$ref": "#/components/parameters/deviceModel"
+          },
+          {
+            "in": "query",
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "in": "query",
+            "$ref": "#/components/parameters/page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "description": "Device Specific Attributes",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AllDevices"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/PaginatedResource"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/{syncCode}/history/{start}/{end}": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "summary": "Device history",
+        "description": "This endpoint returns historical records for the device identified by `syncCode`, covering the period between `start` and `end` timestamps. Data can be sampled based on the provided `sample` query parameter, if specified.\r\n\r\n> This endpoint has the potential to return a very large dataset, it is recommended to use the `sample` query parameter to limit the size of the data response\r\n\r\n> Difference between `start` and `end` timestamps can **not** exceed 30 days\r\n",
+        "operationId": "getDeviceHistory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "syncCode",
+            "$ref": "#/components/parameters/syncCode"
+          },
+          {
+            "in": "path",
+            "name": "start",
+            "$ref": "#/components/parameters/timestamp",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 1752321175
+            }
+          },
+          {
+            "in": "path",
+            "name": "end",
+            "$ref": "#/components/parameters/timestamp",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 1752364375
+            }
+          },
+          {
+            "in": "query",
+            "$ref": "#/components/parameters/limit",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1000
+            }
+          },
+          {
+            "in": "query",
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "in": "query",
+            "name": "sample",
+            "$ref": "#/components/parameters/sample"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "description": "Device Specific Attributes",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AllDevices"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/PaginatedResource"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/{syncCode}/history/accumulated/{start}/{end}": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "summary": "Accumulated data",
+        "description": "This endpoint returns historical records for the device identified by `syncCode`, covering the period between `start` and `end` timestamps.\r\n> Data will be processed in one minute intervals unless the date range exceeds 24 hours, at which point the interval size will be one hour.\r\n\r\n> Difference between `start` and `end` timestamps can **not** exceed 30 days\r\n",
+        "operationId": "getDeviceHistory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "syncCode",
+            "$ref": "#/components/parameters/syncCode"
+          },
+          {
+            "in": "path",
+            "name": "start",
+            "$ref": "#/components/parameters/timestamp",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 1752321175
+            }
+          },
+          {
+            "in": "path",
+            "name": "end",
+            "$ref": "#/components/parameters/timestamp",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 1752364375049
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Device Specific Attributes",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AllDevices"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "authorizationHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-KEY",
+        "description": "API key request header"
+      }
+    },
+    "parameters": {
+      "syncCode": {
+        "name": "syncCode",
+        "description": "A unique identifier for a device, used to reference and retrieve its associated data. This value is assigned to each device and remains consistent across requests.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "examples": [
+            "AENG-1111",
+            "AECO-2222"
+          ]
+        }
+      },
+      "deviceModel": {
+        "name": "model",
+        "description": "The model identifier for a device, used to classify devices by type. This value determines the device's capabilities and functionality.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "examples": [
+            "BTU",
+            "ECO",
+            "ENG",
+            "FLO",
+            "FLW",
+            "PRE",
+            "PRS",
+            "SGL",
+            "SNO",
+            "SUN",
+            "THM",
+            "ZON"
+          ]
+        }
+      },
+      "timestamp": {
+        "name": "timestamp",
+        "description": "A Unix timestamp representing a specific point in time, measured in seconds since January 1, 1970 (UTC). Used to define time ranges for queries.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "examples": [
+            1752321175,
+            1752364375049
+          ]
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "description": "The maximum number of records to return in a single response. Used for pagination to control the dataset size.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "default": 25
+        }
+      },
+      "offset": {
+        "name": "offset",
+        "description": "The number of records to skip before returning results. Used for pagination to retrieve data in sequential batches.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "default": 0
+        }
+      },
+      "page": {
+        "name": "page",
+        "description": "The page number of the results to retrieve. Used for pagination to navigate through data in sequential pages.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "default": 1
+        }
+      },
+      "sample": {
+        "name": "sample",
+        "description": "A numeric value that determines the number of data points to include in the response. This helps control the size of the returned dataset. A higher value includes more data points.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1000
+        }
+      }
+    },
+    "responses": {},
+    "schemas": {
+      "DeviceBrief": {
+        "x-internal": true,
+        "type": "object",
+        "properties": {
+          "connectedAt": {
+            "type": "datetime",
+            "examples": [
+              "2024-04-16T21:36:29.664Z",
+              "2024-04-1T21:34:18.664Z"
+            ]
+          },
+          "syncCode": {
+            "type": "string",
+            "examples": [
+              "AECO-4321",
+              "AZON-1234"
+            ]
+          },
+          "deviceType": {
+            "type": "string",
+            "examples": [
+              "ECO",
+              "ZON"
+            ]
+          },
+          "firmVer": {
+            "type": "decimal",
+            "examples": [
+              1.22,
+              1.32
+            ]
+          }
+        }
+      },
+      "DeviceBase": {
+        "x-internal": true,
+        "type": "object",
+        "description": "Base Device Attributes",
+        "properties": {
+          "connectedAt": {
+            "type": "datetime",
+            "examples": [
+              "2024-04-16T21:36:29.664Z",
+              "2024-04-1T21:34:18.664Z"
+            ]
+          },
+          "syncCode": {
+            "type": "string",
+            "examples": [
+              "AECO-4321",
+              "AZON-1234"
+            ]
+          },
+          "deviceType": {
+            "type": "string",
+            "examples": [
+              "ECO",
+              "ZON"
+            ]
+          },
+          "firmVer": {
+            "type": "decimal",
+            "examples": [
+              1.22,
+              1.32
+            ]
+          },
+          "name": {
+            "type": "string",
+            "examples": [
+              "Living Room",
+              "Garage"
+            ]
+          },
+          "connected": {
+            "type": "boolean",
+            "examples": [
+              true
+            ]
+          }
+        }
+      },
+      "AllDevices": {
+        "x-internal": true,
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/BTU-0100",
+            "description": "BTU-0100"
+          },
+          {
+            "$ref": "#/components/schemas/ECO-0600",
+            "description": "ECO-0600"
+          },
+          {
+            "$ref": "#/components/schemas/ENG-0100",
+            "description": "ENG-0100"
+          },
+          {
+            "$ref": "#/components/schemas/FLO-0100",
+            "description": "FLO-0100"
+          },
+          {
+            "$ref": "#/components/schemas/FLW-0100",
+            "description": "FLW-0100"
+          },
+          {
+            "$ref": "#/components/schemas/SESF-3221",
+            "description": "SESF-3221"
+          },
+          {
+            "$ref": "#/components/schemas/SNO-0600",
+            "description": "SNO-0600"
+          },
+          {
+            "$ref": "#/components/schemas/SGL-0600",
+            "description": "SGL-0600"
+          },
+          {
+            "$ref": "#/components/schemas/THM-0600",
+            "description": "THM-0600"
+          },
+          {
+            "$ref": "#/components/schemas/ZON-0600",
+            "description": "ZON-0600"
+          }
+        ]
+      },
+      "BTU-0100": {
+        "type": "object",
+        "properties": {
+          "slaveRecent": {
+            "type": "number",
+            "readOnly": false
+          },
+          "convertedTempF": {
+            "type": "number",
+            "readOnly": false
+          },
+          "convertedFlowGpm": {
+            "type": "number",
+            "readOnly": false
+          },
+          "slaveTempF": {
+            "type": "number",
+            "readOnly": false
+          },
+          "slavePressurePsi": {
+            "type": "number",
+            "readOnly": false
+          },
+          "btuCalculated": {
+            "type": "number",
+            "readOnly": false
+          },
+          "btuAll": {
+            "type": "number",
+            "readOnly": false
+          },
+          "extraThermistorTemp": {
+            "type": "number",
+            "readOnly": false
+          },
+          "triacState": {
+            "type": "number",
+            "readOnly": false
+          },
+          "flowCounter": {
+            "type": "number",
+            "readOnly": false
+          },
+          "maxPressure": {
+            "type": "number",
+            "readOnly": false
+          }
+        }
+      },
+      "CPU-0600": {
+        "x-internal": true,
+        "type": "object",
+        "properties": {}
+      },
+      "ECO-0600": {
+        "type": "object",
+        "properties": {
+          "relays": {
+            "type": "object",
+            "items": {
+              "type": "boolean"
+            },
+            "description": "Object of relay states, where each value indicates if the relay is active (true) or inactive (false).",
+            "readOnly": true
+          },
+          "temperatures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Indicates if the temperature sensor is enabled.",
+                  "readOnly": true
+                },
+                "title": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The title of the temperature sensor.",
+                  "readOnly": true
+                },
+                "activated": {
+                  "type": "boolean",
+                  "description": "Indicates if the sensor is activated.",
+                  "readOnly": true
+                },
+                "activatedColor": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The color associated with the activated state.",
+                  "readOnly": true
+                },
+                "activatedState": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The state associated with the activated sensor.",
+                  "readOnly": true
+                },
+                "current": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "The current temperature reading.",
+                  "readOnly": true
+                },
+                "target": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "The target temperature value.",
+                  "readOnly": true
+                },
+                "type": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The type of temperature sensor (e.g., single, outdoor).",
+                  "readOnly": true
+                },
+                "priority": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Indicates if priority is enabled for this sensor.",
+                      "readOnly": true
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "The type of priority (e.g., hot).",
+                      "readOnly": true
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "The title of the priority (e.g., Heating).",
+                      "readOnly": true
+                    }
+                  },
+                  "required": [
+                    "enabled",
+                    "type",
+                    "title"
+                  ]
+                }
+              },
+              "required": [
+                "enabled",
+                "activated",
+                "priority"
+              ]
+            },
+            "description": "Array of temperature sensor configurations.",
+            "readOnly": true
+          },
+          "showPri": {
+            "type": "integer",
+            "description": "Indicates the currently displayed priority state.",
+            "readOnly": true
+          },
+          "demands": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The identifier for the demand (e.g., hd, cd, dhw).",
+                  "readOnly": true
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title of the demand (e.g., Heat, Cool).",
+                  "readOnly": true
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Indicates if the demand is enabled.",
+                  "readOnly": true
+                },
+                "activated": {
+                  "type": "boolean",
+                  "description": "Indicates if the demand is currently active.",
+                  "readOnly": true
+                }
+              },
+              "required": [
+                "name",
+                "title",
+                "enabled",
+                "activated"
+              ]
+            },
+            "description": "Array of demands with their configuration.",
+            "readOnly": true
+          }
+        }
+      },
+      "ENG-0100": {
+        "type": "object",
+        "properties": {
+          "secondaryConnected": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "title": "Secondary Connected",
+            "readOnly": true
+          },
+          "current": {
+            "type": "number",
+            "title": "Return Temperature",
+            "readOnly": true
+          },
+          "returnFlow": {
+            "type": "number",
+            "title": "Return Flow",
+            "readOnly": true
+          },
+          "supplyTemperature": {
+            "type": "number",
+            "title": "Supply Temperature",
+            "readOnly": true
+          },
+          "supplyPressure": {
+            "type": "number",
+            "title": "Supply Pressure",
+            "readOnly": true
+          },
+          "flowCounter": {
+            "type": "number",
+            "title": "Flow Counter",
+            "readOnly": true
+          },
+          "lifetimeHeating": {
+            "type": "number",
+            "title": "Accumulated Heating",
+            "readOnly": true
+          },
+          "thermistorTemperature": {
+            "type": "number",
+            "title": "Thermistor Temperature",
+            "readOnly": true
+          },
+          "lifetimeCooling": {
+            "type": "number",
+            "title": "Accumulated Cooling",
+            "readOnly": true
+          }
+        }
+      },
+      "FLO-0100": {
+        "type": "object",
+        "properties": {
+          "convertedTempF": {
+            "type": "number",
+            "title": "Temperature",
+            "readOnly": true
+          },
+          "convertedFlowGpm": {
+            "type": "number",
+            "title": "Flow",
+            "readOnly": true
+          },
+          "lifetimeVolume": {
+            "type": "number",
+            "default": null,
+            "title": "Lifetime Volume",
+            "readOnly": true
+          },
+          "extraThermistorTemp": {
+            "type": "number",
+            "title": "Thermistor Temperature",
+            "readOnly": true
+          },
+          "triacState": {
+            "type": "number",
+            "readOnly": true
+          },
+          "flowCounter": {
+            "type": "number",
+            "readOnly": true
+          }
+        }
+      },
+      "FLW-0100": {
+        "type": "object",
+        "properties": {
+          "returnTemperature": {
+            "type": "number",
+            "title": "Return Temperature",
+            "readOnly": true
+          },
+          "returnFlow": {
+            "type": "number",
+            "title": "Return Flow",
+            "readOnly": true
+          },
+          "flowCount": {
+            "type": "number",
+            "title": "Flow Count",
+            "readOnly": true
+          },
+          "triacRelay": {
+            "type": "number",
+            "title": "Triac State Relay",
+            "readOnly": true
+          },
+          "totalVolume": {
+            "type": "number",
+            "title": "Total Accumulated",
+            "readOnly": true
+          },
+          "thermistorTemperature": {
+            "type": "number",
+            "title": "Thermistor Temperature",
+            "readOnly": true
+          }
+        }
+      },
+      "PRE-0100": {
+        "x-internal": true,
+        "type": "object",
+        "properties": {}
+      },
+      "PRS-0100": {
+        "x-internal": true,
+        "type": "object",
+        "properties": {}
+      },
+      "SESF-3221": {
+        "type": "object",
+        "properties": {
+          "accumulated": {
+            "type": "number",
+            "title": "Energy Produced",
+            "minimum": 0,
+            "readOnly": true
+          },
+          "current": {
+            "type": "number",
+            "title": "Current Energy",
+            "minimum": 0,
+            "readOnly": true
+          },
+          "charge": {
+            "type": "number",
+            "title": "Charge",
+            "minimum": 0,
+            "readOnly": true
+          },
+          "screenColor": {
+            "type": "number",
+            "title": "Screen Color",
+            "minimum": 0,
+            "maximum": 10,
+            "readOnly": true
+          },
+          "error": {
+            "type": "number",
+            "title": "Error",
+            "minimum": 0,
+            "maximum": 512,
+            "readOnly": true
+          },
+          "flow": {
+            "type": "number",
+            "title": "Flow",
+            "minimum": 0,
+            "readOnly": true
+          },
+          "flowTemperature": {
+            "type": "number",
+            "title": "Flow Temperature",
+            "minimum": -51,
+            "readOnly": true
+          },
+          "pressureTemperature": {
+            "type": "number",
+            "title": "Pressure Temperature",
+            "minimum": -51,
+            "readOnly": true
+          },
+          "peakPower": {
+            "type": "number",
+            "title": "Peak Power",
+            "minimum": 0,
+            "readOnly": true
+          },
+          "pressure": {
+            "type": "number",
+            "title": "Pressure",
+            "minimum": 0,
+            "readOnly": true
+          },
+          "collectorTemperature": {
+            "type": "number",
+            "title": "Collector Temperature",
+            "minimum": -51,
+            "readOnly": true
+          },
+          "tankTemperature": {
+            "type": "number",
+            "title": "Tank Temperature",
+            "minimum": -51,
+            "readOnly": true
+          },
+          "temperature": {
+            "type": "number",
+            "title": "Temperature",
+            "minimum": -51,
+            "readOnly": true
+          }
+        }
+      },
+      "SNO-0600": {
+        "type": "object",
+        "properties": {
+          "demands": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 255,
+            "title": "Demands",
+            "readOnly": true
+          },
+          "useForecast": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "title": "Use Forecast",
+            "readOnly": true
+          },
+          "heaterError": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2,
+            "title": "Heater Error",
+            "readOnly": true
+          },
+          "meltTime": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 240,
+            "title": "Melt Time",
+            "readOnly": true
+          },
+          "modPercentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "title": "MOD Percentage",
+            "readOnly": true
+          },
+          "slabTemperature": {
+            "type": "number",
+            "minimum": -41,
+            "maximum": 250,
+            "title": "Slab Target",
+            "readOnly": true
+          },
+          "snowAmount": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "title": "Snow Amount",
+            "readOnly": true
+          },
+          "status": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "title": "Status",
+            "readOnly": true
+          },
+          "systemTarget": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 250,
+            "title": "System Target",
+            "readOnly": true
+          },
+          "outdoorTemperature": {
+            "type": "number",
+            "minimum": -50,
+            "maximum": 250,
+            "title": "Outdoor Temperature",
+            "readOnly": true
+          },
+          "returnTemperature": {
+            "type": "number",
+            "minimum": -50,
+            "maximum": 250,
+            "title": "Return Temperature",
+            "readOnly": true
+          },
+          "systemTemperature": {
+            "type": "number",
+            "minimum": -50,
+            "maximum": 250,
+            "title": "System Temperature",
+            "readOnly": true
+          }
+        }
+      },
+      "SGL-0600": {
+        "type": "object",
+        "properties": {
+          "relays": {
+            "type": "array",
+            "title": "Relays",
+            "readOnly": true
+          }
+        }
+      },
+      "THM-0600": {
+        "type": "object",
+        "properties": {
+          "heatTarget": {
+            "type": "number",
+            "title": "Room Heat Target",
+            "minimum": 32,
+            "maximum": 150,
+            "readOnly": true
+          },
+          "coolTarget": {
+            "type": "number",
+            "title": "Room Cool Target",
+            "minimum": 32,
+            "maximum": 150,
+            "readOnly": true
+          },
+          "room": {
+            "type": "number",
+            "title": "Room Temperature",
+            "minimum": 32,
+            "maximum": 250,
+            "readOnly": true
+          },
+          "floor": {
+            "type": "number",
+            "title": "Floor Temperature",
+            "minimum": -50,
+            "maximum": 250,
+            "readOnly": true
+          },
+          "humidity": {
+            "type": "number",
+            "title": "Humidity",
+            "minimum": 0,
+            "maximum": 100,
+            "readOnly": true
+          },
+          "demand1": {
+            "type": "number",
+            "title": "Demands",
+            "minimum": 0,
+            "maximum": 255,
+            "readOnly": true
+          },
+          "demand2": {
+            "type": "number",
+            "title": "Demands 2",
+            "minimum": 0,
+            "maximum": 255,
+            "readOnly": true
+          },
+          "zone": {
+            "type": "number",
+            "title": "Selected Zone",
+            "minimum": 0,
+            "maximum": 20,
+            "readOnly": true
+          },
+          "priority": {
+            "type": "number",
+            "title": "Priority Type",
+            "minimum": 1,
+            "maximum": 9,
+            "readOnly": true
+          },
+          "humidityOn": {
+            "type": "number",
+            "title": "Humidity On",
+            "minimum": 0,
+            "maximum": 1,
+            "readOnly": true
+          }
+        }
+      },
+      "ZON-0600": {
+        "x-internal": true,
+        "type": "object",
+        "properties": {}
+      },
+      "PaginatedResource": {
+        "x-internal": true,
+        "type": "object",
+        "description": "Page Control",
+        "properties": {
+          "totalItems": {
+            "type": "integer",
+            "format": "int64",
+            "examples": [
+              44
+            ]
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int64",
+            "examples": [
+              3
+            ]
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64",
+            "examples": [
+              0
+            ]
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int64",
+            "examples": [
+              20
+            ]
+          },
+          "page": {
+            "type": "integer",
+            "format": "int64",
+            "examples": [
+              1
+            ]
+          },
+          "pagingCounter": {
+            "type": "integer",
+            "format": "int64",
+            "examples": [
+              1
+            ]
+          },
+          "hasPrevPage": {
+            "type": "boolean",
+            "examples": [
+              false
+            ]
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "examples": [
+              true
+            ]
+          },
+          "nextPage": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "examples": [
+              2
+            ]
+          },
+          "prevPage": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "examples": [
+              null
+            ]
+          }
+        }
+      }
+    }
+  }
+}
